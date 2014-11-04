@@ -57,10 +57,6 @@ public final class Calculator implements Parser<Character, BigDecimal> {
     private final FluentParser<Character, BigDecimal> additionOrSubtraction;
     private final FluentParser<Character, BigDecimal> expr;
 
-    public Calculator() {
-        this(new Context());
-    }
-
     public Calculator(Context context) {
         this.context = context;
         MemoParser.Context<Character> memoContext = context.memoContext;
@@ -129,7 +125,8 @@ public final class Calculator implements Parser<Character, BigDecimal> {
 
     public static void main(String[] args) {
         String sequence = "1+(2-3)*4";
-        ParseResult<Character, BigDecimal> result = new Calculator().parse(Sequences.forCharSequence(sequence));
+        ParseResult<Character, BigDecimal> result = new Calculator(new Context()).parse(
+                Sequences.forCharSequence(sequence));
         if (result.isSuccess()) {
             System.out.println(result.getResult());
         } else {

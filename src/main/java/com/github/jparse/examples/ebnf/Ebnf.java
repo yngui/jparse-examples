@@ -95,10 +95,6 @@ public final class Ebnf implements Parser<Character, Grammar> {
     private final FluentParser<Character, Expression> altExpr;
     private final FluentParser<Character, Grammar> grammar;
 
-    public Ebnf() {
-        this(new Context());
-    }
-
     public Ebnf(Context context) {
         this.context = context;
         MemoParser.Context<Character> memoContext = context.memoContext;
@@ -202,7 +198,7 @@ public final class Ebnf implements Parser<Character, Grammar> {
 
     public static void main(String[] args) throws IOException {
         String sequence = readFully(new InputStreamReader(Ebnf.class.getResourceAsStream("grammar")));
-        ParseResult<Character, Grammar> result = new Ebnf().parse(Sequences.forCharSequence(sequence));
+        ParseResult<Character, Grammar> result = new Ebnf(new Context()).parse(Sequences.forCharSequence(sequence));
         if (result.isSuccess()) {
             Grammar grammar = result.getResult();
             System.out.println(grammar);
