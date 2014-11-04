@@ -89,17 +89,14 @@ public final class Ebnf implements Parser<Character, Grammar> {
         }
     };
 
-    private final Context context;
+    private final MemoParser.Context<Character> memoContext = new MemoParser.Context<>();
+    private final LogParser.Context logContext = new LogParser.Context();
     private final FluentParser<Character, Expression> quantExpr;
     private final FluentParser<Character, Expression> concatExpr;
     private final FluentParser<Character, Expression> altExpr;
     private final FluentParser<Character, Grammar> grammar;
 
-    public Ebnf(Context context) {
-        this.context = context;
-        MemoParser.Context<Character> memoContext = context.memoContext;
-        LogParser.Context logContext = context.logContext;
-
+    public Ebnf() {
         FluentParser<Character, Expression> quantExprRef = new FluentParser<Character, Expression>() {
             @Override
             public ParseResult<Character, Expression> parse(Sequence<Character> sequence) {
@@ -198,7 +195,7 @@ public final class Ebnf implements Parser<Character, Grammar> {
 
     public static void main(String[] args) throws IOException {
         String sequence = readFully(new InputStreamReader(Ebnf.class.getResourceAsStream("grammar")));
-        ParseResult<Character, Grammar> result = new Ebnf(new Context()).parse(Sequences.forCharSequence(sequence));
+        ParseResult<Character, Grammar> result = new Ebnf().parse(Sequences.forCharSequence(sequence));
         if (result.isSuccess()) {
             Grammar grammar = result.getResult();
             System.out.println(grammar);
@@ -217,21 +214,11 @@ public final class Ebnf implements Parser<Character, Grammar> {
         return sb.toString();
     }
 
-    public Context getContext() {
-        return context;
-    }
-
     @Override
     public ParseResult<Character, Grammar> parse(Sequence<Character> sequence) {
-        return phrase(grammar).parse(sequence);
-    }
-
-    public static final class Context {
-
-        final MemoParser.Context<Character> memoContext = new MemoParser.Context<>();
-        final LogParser.Context logContext = new LogParser.Context();
-
-        public void reset() {
+        try {
+            return phrase(grammar).parse(sequence);
+        } finally {
             memoContext.reset();
             logContext.reset();
         }

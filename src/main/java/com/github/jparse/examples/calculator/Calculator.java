@@ -52,16 +52,13 @@ public final class Calculator implements Parser<Character, BigDecimal> {
         }
     };
 
-    private final Context context;
+    private final MemoParser.Context<Character> memoContext = new MemoParser.Context<>();
+    private final LogParser.Context logContext = new LogParser.Context();
     private final FluentParser<Character, BigDecimal> multiplicationOrDivision;
     private final FluentParser<Character, BigDecimal> additionOrSubtraction;
     private final FluentParser<Character, BigDecimal> expr;
 
-    public Calculator(Context context) {
-        this.context = context;
-        MemoParser.Context<Character> memoContext = context.memoContext;
-        LogParser.Context logContext = context.logContext;
-
+    public Calculator() {
         FluentParser<Character, BigDecimal> multiplicationOrDivisionRef = new FluentParser<Character, BigDecimal>() {
             @Override
             public ParseResult<Character, BigDecimal> parse(Sequence<Character> sequence) {
@@ -125,8 +122,7 @@ public final class Calculator implements Parser<Character, BigDecimal> {
 
     public static void main(String[] args) {
         String sequence = "1+(2-3)*4";
-        ParseResult<Character, BigDecimal> result = new Calculator(new Context()).parse(
-                Sequences.forCharSequence(sequence));
+        ParseResult<Character, BigDecimal> result = new Calculator().parse(Sequences.forCharSequence(sequence));
         if (result.isSuccess()) {
             System.out.println(result.getResult());
         } else {
@@ -134,21 +130,11 @@ public final class Calculator implements Parser<Character, BigDecimal> {
         }
     }
 
-    public Context getContext() {
-        return context;
-    }
-
     @Override
     public ParseResult<Character, BigDecimal> parse(Sequence<Character> sequence) {
-        return expr.phrase().parse(sequence);
-    }
-
-    public static final class Context {
-
-        final MemoParser.Context<Character> memoContext = new MemoParser.Context<>();
-        final LogParser.Context logContext = new LogParser.Context();
-
-        public void reset() {
+        try {
+            return expr.phrase().parse(sequence);
+        } finally {
             memoContext.reset();
             logContext.reset();
         }
