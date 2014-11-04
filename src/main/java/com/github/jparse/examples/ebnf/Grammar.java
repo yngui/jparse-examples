@@ -9,7 +9,7 @@ public final class Grammar {
     private final Collection<Rule> rules;
 
     public Grammar(Collection<Rule> rules) {
-        this.rules = Collections.unmodifiableList(new ArrayList<Rule>(rules));
+        this.rules = Collections.unmodifiableList(new ArrayList<>(rules));
     }
 
     public Collection<Rule> getRules() {

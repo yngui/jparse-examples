@@ -1,6 +1,6 @@
 package com.github.jparse.examples.ebnf;
 
-import static com.github.jparse.Objects.requireNonNull;
+import static java.util.Objects.requireNonNull;
 
 public final class Identifier {
 
