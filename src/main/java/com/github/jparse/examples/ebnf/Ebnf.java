@@ -1,3 +1,27 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Igor Konev
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 package com.github.jparse.examples.ebnf;
 
 import com.github.jparse.FluentParser;
@@ -20,174 +44,166 @@ import static com.github.jparse.Sequences.withMemo;
 
 public final class Ebnf implements Parser<Character, Grammar> {
 
-    private static final Function<String, Identifier> newIdent = new Function<String, Identifier>() {
-        @Override
-        public Identifier apply(String arg) {
-            return new Identifier(arg);
-        }
-    };
-    private static final Function<String, TerminalExpression> newTermExpr = new Function<String, TerminalExpression>() {
-        @Override
-        public TerminalExpression apply(String arg) {
-            return new TerminalExpression(arg);
-        }
-    };
-    private static final Function<Identifier, IdentifierExpression> newIdentExpr = new Function<Identifier,
-            IdentifierExpression>() {
-        @Override
-        public IdentifierExpression apply(Identifier arg) {
-            return new IdentifierExpression(arg);
-        }
-    };
-    private static final Function<Expression, OptionExpression> newOptExpr = new Function<Expression,
-            OptionExpression>() {
-        @Override
-        public OptionExpression apply(Expression arg) {
-            return new OptionExpression(arg);
-        }
-    };
-    private static final Function<Expression, RepetitionExpression> newRepExpr = new Function<Expression,
-            RepetitionExpression>() {
-        @Override
-        public RepetitionExpression apply(Expression arg) {
-            return new RepetitionExpression(arg);
-        }
-    };
-    private static final Function<Expression, Repetition1Expression> newRep1Expr = new Function<Expression,
-            Repetition1Expression>() {
-        @Override
-        public Repetition1Expression apply(Expression arg) {
-            return new Repetition1Expression(arg);
-        }
-    };
-    private static final Function<Pair<Expression, Expression>, AlternationExpression> newAltExpr = new
-            Function<Pair<Expression, Expression>, AlternationExpression>() {
-        @Override
-        public AlternationExpression apply(Pair<Expression, Expression> arg) {
-            return new AlternationExpression(arg.getLeft(), arg.getRight());
-        }
-    };
-    private static final Function<Pair<Expression, Expression>, ConcatenationExpression> newConcatExpr = new
-            Function<Pair<Expression, Expression>, ConcatenationExpression>() {
-        @Override
-        public ConcatenationExpression apply(Pair<Expression, Expression> arg) {
-            return new ConcatenationExpression(arg.getLeft(), arg.getRight());
-        }
-    };
-    private static final Function<Pair<Identifier, Expression>, Rule> newRule = new Function<Pair<Identifier,
-            Expression>, Rule>() {
-        @Override
-        public Rule apply(Pair<Identifier, Expression> arg) {
-            return new Rule(arg.getLeft(), arg.getRight());
-        }
-    };
-    private static final Function<Collection<Rule>, Grammar> newGrammar = new Function<Collection<Rule>, Grammar>() {
-        @Override
-        public Grammar apply(Collection<Rule> arg) {
-            return new Grammar(arg);
-        }
-    };
+    private static final FluentParser<Character, Expression> quantExpr;
+    private static final FluentParser<Character, Expression> concatExpr;
+    private static final FluentParser<Character, Expression> altExpr;
+    private static final FluentParser<Character, Grammar> grammar;
 
-    private final FluentParser<Character, Expression> quantExpr;
-    private final FluentParser<Character, Expression> concatExpr;
-    private final FluentParser<Character, Expression> altExpr;
-    private final FluentParser<Character, Grammar> grammar;
-
-    public Ebnf() {
+    static {
+        Function<String, Identifier> newIdent = new Function<String, Identifier>() {
+            @Override
+            public Identifier apply(String arg) {
+                return new Identifier(arg);
+            }
+        };
+        Function<String, Expression> newTermExpr = new Function<String, Expression>() {
+            @Override
+            public Expression apply(String arg) {
+                return new TerminalExpression(arg);
+            }
+        };
+        Function<Identifier, Expression> newIdentExpr = new Function<Identifier, Expression>() {
+            @Override
+            public Expression apply(Identifier arg) {
+                return new IdentifierExpression(arg);
+            }
+        };
+        Function<Expression, Expression> newOptExpr = new Function<Expression, Expression>() {
+            @Override
+            public Expression apply(Expression arg) {
+                return new OptionExpression(arg);
+            }
+        };
+        Function<Expression, Expression> newRepExpr = new Function<Expression, Expression>() {
+            @Override
+            public Expression apply(Expression arg) {
+                return new RepetitionExpression(arg);
+            }
+        };
+        Function<Expression, Expression> newRep1Expr = new Function<Expression, Expression>() {
+            @Override
+            public Expression apply(Expression arg) {
+                return new Repetition1Expression(arg);
+            }
+        };
+        Function<Pair<Expression, Expression>, Expression> newAltExpr = new Function<Pair<Expression, Expression>,
+                Expression>() {
+            @Override
+            public Expression apply(Pair<Expression, Expression> arg) {
+                return new AlternationExpression(arg.getLeft(), arg.getRight());
+            }
+        };
+        Function<Pair<Expression, Expression>, Expression> newConcatExpr = new Function<Pair<Expression, Expression>,
+                Expression>() {
+            @Override
+            public Expression apply(Pair<Expression, Expression> arg) {
+                return new ConcatenationExpression(arg.getLeft(), arg.getRight());
+            }
+        };
+        Function<Pair<Identifier, Expression>, Rule> newRule = new Function<Pair<Identifier, Expression>, Rule>() {
+            @Override
+            public Rule apply(Pair<Identifier, Expression> arg) {
+                return new Rule(arg.getLeft(), arg.getRight());
+            }
+        };
+        Function<Collection<Rule>, Grammar> newGrammar = new Function<Collection<Rule>, Grammar>() {
+            @Override
+            public Grammar apply(Collection<Rule> arg) {
+                return new Grammar(arg);
+            }
+        };
         FluentParser<Character, Expression> quantExprRef = new FluentParser<Character, Expression>() {
             @Override
-            public ParseResult<Character, Expression> parse(Sequence<Character> sequence) {
+            public ParseResult<Character, ? extends Expression> parse(Sequence<Character> sequence) {
                 return quantExpr.parse(sequence);
             }
         };
-
         FluentParser<Character, Expression> concatExprRef = new FluentParser<Character, Expression>() {
             @Override
-            public ParseResult<Character, Expression> parse(Sequence<Character> sequence) {
+            public ParseResult<Character, ? extends Expression> parse(Sequence<Character> sequence) {
                 return concatExpr.parse(sequence);
             }
         };
-
         FluentParser<Character, Expression> altExprRef = new FluentParser<Character, Expression>() {
             @Override
-            public ParseResult<Character, Expression> parse(Sequence<Character> sequence) {
+            public ParseResult<Character, ? extends Expression> parse(Sequence<Character> sequence) {
                 return altExpr.parse(sequence);
             }
         };
-
-        FluentParser<Character, ?> comments = pattern("/\\*.*?\\*/").rep().log("comments");
-
+        FluentParser<Character, ?> comments = pattern("/\\*.*?\\*/").rep().named("comments").log();
         FluentParser<Character, Identifier> ident = comments.thenRight(pattern("^[A-Za-z][0-9A-Za-z_]*"))
                 .map(newIdent)
-                .log("ident");
-
-        FluentParser<Character, TerminalExpression> termExpr = comments.thenRight(
-                literal("'").thenRight(pattern("[^']*"))
-                        .thenLeft(literal("'").asError())
-                        .orelse(literal("\"").thenRight(pattern("[^\"]*")).thenLeft(literal("\"").asError()))
-                        .<String>cast()).map(newTermExpr).log("termExpr");
-
-        FluentParser<Character, IdentifierExpression> identExpr = ident.map(newIdentExpr).log("identExpr");
-
+                .named("ident")
+                .log();
+        FluentParser<Character, Expression> termExpr = comments.thenRight(literal("'").thenRight(pattern("[^']*"))
+                .thenLeft(literal("'").asError())
+                .orelse(literal("\"").thenRight(pattern("[^\"]*")).thenLeft(literal("\"").asError())))
+                .map(newTermExpr)
+                .named("termExpr")
+                .log();
+        FluentParser<Character, Expression> identExpr = ident.map(newIdentExpr).named("identExpr").log();
         FluentParser<Character, Expression> groupExpr = comments.thenRight(literal("("))
                 .thenRight(altExprRef)
                 .thenLeft(comments)
                 .thenLeft(literal(")").asError())
-                .log("groupExpr");
-
-        FluentParser<Character, OptionExpression> optExpr = quantExprRef.thenLeft(comments)
+                .named("groupExpr")
+                .log();
+        FluentParser<Character, Expression> optExpr = quantExprRef.thenLeft(comments)
                 .thenLeft(literal("?"))
                 .map(newOptExpr)
-                .log("optExpr");
-
-        FluentParser<Character, RepetitionExpression> repExpr = quantExprRef.thenLeft(comments)
+                .named("optExpr")
+                .log();
+        FluentParser<Character, Expression> repExpr = quantExprRef.thenLeft(comments)
                 .thenLeft(literal("*"))
                 .map(newRepExpr)
-                .log("repExpr");
-
-        FluentParser<Character, Repetition1Expression> rep1Expr = quantExprRef.thenLeft(comments)
+                .named("repExpr")
+                .log();
+        FluentParser<Character, Expression> rep1Expr = quantExprRef.thenLeft(comments)
                 .thenLeft(literal("+"))
                 .map(newRep1Expr)
-                .log("rep1Expr");
-
+                .named("rep1Expr")
+                .log();
         quantExpr = optExpr.orelse(repExpr)
                 .orelse(rep1Expr)
                 .orelse(termExpr.orelse(identExpr).orelse(groupExpr))
-                .<Expression>cast()
                 .memo()
-                .log("quantExpr");
-
+                .named("quantExpr")
+                .log();
         concatExpr = concatExprRef.thenLeft(comments)
                 .then(quantExpr)
                 .map(newConcatExpr)
                 .orelse(quantExpr)
-                .<Expression>cast()
                 .memo()
-                .log("concatExpr");
-
+                .named("concatExpr")
+                .log();
         altExpr = altExprRef.thenLeft(comments)
                 .thenLeft(literal("|"))
                 .then(concatExpr)
                 .map(newAltExpr)
                 .orelse(concatExpr)
-                .<Expression>cast()
                 .memo()
-                .log("altExpr");
-
+                .named("altExpr")
+                .log();
         FluentParser<Character, Rule> rule = ident.thenLeft(comments)
                 .thenLeft(literal(":").asError())
                 .then(altExpr)
                 .thenLeft(comments)
                 .thenLeft(literal(";").asError())
                 .map(newRule)
-                .log("rule");
-
-        grammar = rule.rep1().thenLeft(comments).thenLeft(pattern("\\s*")).map(newGrammar).asFailure().log("grammar");
+                .named("rule")
+                .log();
+        grammar = rule.rep1()
+                .thenLeft(comments)
+                .thenLeft(pattern("\\s*"))
+                .map(newGrammar)
+                .asFailure()
+                .named("grammar")
+                .log();
     }
 
     public static void main(String[] args) throws IOException {
         String sequence = readFully(new InputStreamReader(Ebnf.class.getResourceAsStream("grammar")));
-        ParseResult<Character, Grammar> result = new Ebnf().parse(fromCharSequence(sequence));
+        ParseResult<Character, ? extends Grammar> result = new Ebnf().parse(fromCharSequence(sequence));
         if (result.isSuccess()) {
             Grammar grammar = result.getResult();
             System.out.println(grammar);
@@ -207,7 +223,7 @@ public final class Ebnf implements Parser<Character, Grammar> {
     }
 
     @Override
-    public ParseResult<Character, Grammar> parse(Sequence<Character> sequence) {
+    public ParseResult<Character, ? extends Grammar> parse(Sequence<Character> sequence) {
         return phrase(grammar).parse(withMemo(sequence));
     }
 }
