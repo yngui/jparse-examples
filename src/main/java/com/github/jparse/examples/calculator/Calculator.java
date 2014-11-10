@@ -28,7 +28,6 @@ import com.github.jparse.FluentParser;
 import com.github.jparse.Function;
 import com.github.jparse.Pair;
 import com.github.jparse.ParseResult;
-import com.github.jparse.Parser;
 import com.github.jparse.Sequence;
 
 import java.math.BigDecimal;
@@ -38,7 +37,7 @@ import static com.github.jparse.CharParsers.pattern;
 import static com.github.jparse.Sequences.fromCharSequence;
 import static com.github.jparse.Sequences.withMemo;
 
-public final class Calculator implements Parser<Character, BigDecimal> {
+public final class Calculator {
 
     private static final FluentParser<Character, BigDecimal> multiplicationOrDivision;
     private static final FluentParser<Character, BigDecimal> additionOrSubtraction;
@@ -144,16 +143,11 @@ public final class Calculator implements Parser<Character, BigDecimal> {
 
     public static void main(String[] args) {
         String sequence = "1+(2-3)*4";
-        ParseResult<Character, ? extends BigDecimal> result = new Calculator().parse(fromCharSequence(sequence));
+        ParseResult<Character, ? extends BigDecimal> result = expr.phrase().parse(withMemo(fromCharSequence(sequence)));
         if (result.isSuccess()) {
             System.out.println(result.getResult());
         } else {
             System.out.println(result.getMessage() + " at " + (sequence.length() - result.getRest().length()));
         }
-    }
-
-    @Override
-    public ParseResult<Character, ? extends BigDecimal> parse(Sequence<Character> sequence) {
-        return expr.phrase().parse(withMemo(sequence));
     }
 }

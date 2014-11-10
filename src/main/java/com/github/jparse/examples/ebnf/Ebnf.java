@@ -28,7 +28,6 @@ import com.github.jparse.FluentParser;
 import com.github.jparse.Function;
 import com.github.jparse.Pair;
 import com.github.jparse.ParseResult;
-import com.github.jparse.Parser;
 import com.github.jparse.Sequence;
 
 import java.io.IOException;
@@ -42,7 +41,7 @@ import static com.github.jparse.Parsers.phrase;
 import static com.github.jparse.Sequences.fromCharSequence;
 import static com.github.jparse.Sequences.withMemo;
 
-public final class Ebnf implements Parser<Character, Grammar> {
+public final class Ebnf {
 
     private static final FluentParser<Character, Expression> quantExpr;
     private static final FluentParser<Character, Expression> concatExpr;
@@ -203,7 +202,7 @@ public final class Ebnf implements Parser<Character, Grammar> {
 
     public static void main(String[] args) throws IOException {
         String sequence = readFully(new InputStreamReader(Ebnf.class.getResourceAsStream("grammar")));
-        ParseResult<Character, ? extends Grammar> result = new Ebnf().parse(fromCharSequence(sequence));
+        ParseResult<Character, ? extends Grammar> result = phrase(grammar).parse(withMemo(fromCharSequence(sequence)));
         if (result.isSuccess()) {
             Grammar grammar = result.getResult();
             System.out.println(grammar);
@@ -220,10 +219,5 @@ public final class Ebnf implements Parser<Character, Grammar> {
             sb.append(buf, 0, len);
         }
         return sb.toString();
-    }
-
-    @Override
-    public ParseResult<Character, ? extends Grammar> parse(Sequence<Character> sequence) {
-        return phrase(grammar).parse(withMemo(sequence));
     }
 }
