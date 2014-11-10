@@ -91,29 +91,22 @@ public final class Calculator {
             }
         };
         FluentParser<Character, BigDecimal> number = pattern("[-+]?\\d*\\.?\\d+([eE][-+]?\\d+)?").map(newBigDecimal)
-                .memo()
                 .named("number")
                 .log();
         FluentParser<Character, BigDecimal> grouping = literal("(").asError()
                 .thenRight(additionOrSubtractionRef)
                 .thenLeft(literal(")").asError())
-                .memo()
                 .named("grouping")
                 .log();
-        FluentParser<Character, BigDecimal> numberOrGrouping = number.orelse(grouping)
-                .memo()
-                .named("numberOrGrouping")
-                .log();
+        FluentParser<Character, BigDecimal> numberOrGrouping = number.orelse(grouping).named("numberOrGrouping").log();
         FluentParser<Character, BigDecimal> multiplication = multiplicationOrDivisionRef.thenLeft(literal("*"))
                 .then(numberOrGrouping)
                 .map(multiply)
-                .memo()
                 .named("multiplication")
                 .log();
         FluentParser<Character, BigDecimal> division = multiplicationOrDivisionRef.thenLeft(literal("/"))
                 .then(numberOrGrouping)
                 .map(divide)
-                .memo()
                 .named("division")
                 .log();
         multiplicationOrDivision = multiplication.orelse(division)
@@ -124,13 +117,11 @@ public final class Calculator {
         FluentParser<Character, BigDecimal> addition = additionOrSubtractionRef.thenLeft(literal("+"))
                 .then(multiplicationOrDivisionRef)
                 .map(add)
-                .memo()
                 .named("addition")
                 .log();
         FluentParser<Character, BigDecimal> subtraction = additionOrSubtractionRef.thenLeft(literal("-"))
                 .then(multiplicationOrDivisionRef)
                 .map(subtract)
-                .memo()
                 .named("subtraction")
                 .log();
         additionOrSubtraction = addition.orelse(subtraction)
