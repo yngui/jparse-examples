@@ -35,7 +35,9 @@ import java.math.BigDecimal;
 import static com.github.jparse.CharParsers.literal;
 import static com.github.jparse.CharParsers.pattern;
 import static com.github.jparse.Sequences.fromCharSequence;
-import static com.github.jparse.Sequences.withMemo;
+import static com.github.jparse.StatefulParsers.log;
+import static com.github.jparse.StatefulParsers.memo;
+import static com.github.jparse.StatefulSequences.withMemo;
 
 public final class Calculator {
 
@@ -90,45 +92,28 @@ public final class Calculator {
                 return additionOrSubtraction.parse(sequence);
             }
         };
-        FluentParser<Character, BigDecimal> number = pattern("[-+]?\\d*\\.?\\d+([eE][-+]?\\d+)?").map(newBigDecimal)
-                .named("number")
-                .log();
-        FluentParser<Character, BigDecimal> grouping = literal("(").asError()
+        FluentParser<Character, BigDecimal> number = log(
+                pattern("[-+]?\\d*\\.?\\d+([eE][-+]?\\d+)?").map(newBigDecimal).named("number"));
+        FluentParser<Character, BigDecimal> grouping = log(literal("(").asError()
                 .thenRight(additionOrSubtractionRef)
-                .thenLeft(literal(")").asError())
-                .named("grouping")
-                .log();
-        FluentParser<Character, BigDecimal> numberOrGrouping = number.orelse(grouping).named("numberOrGrouping").log();
-        FluentParser<Character, BigDecimal> multiplication = multiplicationOrDivisionRef.thenLeft(literal("*"))
+                .thenLeft(literal(")").asError()).named("grouping"));
+        FluentParser<Character, BigDecimal> numberOrGrouping = log(number.orelse(grouping).named("numberOrGrouping"));
+        FluentParser<Character, BigDecimal> multiplication = log(multiplicationOrDivisionRef.thenLeft(literal("*"))
                 .then(numberOrGrouping)
-                .map(multiply)
-                .named("multiplication")
-                .log();
-        FluentParser<Character, BigDecimal> division = multiplicationOrDivisionRef.thenLeft(literal("/"))
+                .map(multiply).named("multiplication"));
+        FluentParser<Character, BigDecimal> division = log(multiplicationOrDivisionRef.thenLeft(literal("/"))
                 .then(numberOrGrouping)
-                .map(divide)
-                .named("division")
-                .log();
-        multiplicationOrDivision = multiplication.orelse(division)
-                .orelse(numberOrGrouping)
-                .memo()
-                .named("multiplicationOrDivision")
-                .log();
-        FluentParser<Character, BigDecimal> addition = additionOrSubtractionRef.thenLeft(literal("+"))
+                .map(divide).named("division"));
+        multiplicationOrDivision = log(
+                memo(multiplication.orelse(division).orelse(numberOrGrouping)).named("multiplicationOrDivision"));
+        FluentParser<Character, BigDecimal> addition = log(additionOrSubtractionRef.thenLeft(literal("+"))
                 .then(multiplicationOrDivisionRef)
-                .map(add)
-                .named("addition")
-                .log();
-        FluentParser<Character, BigDecimal> subtraction = additionOrSubtractionRef.thenLeft(literal("-"))
+                .map(add).named("addition"));
+        FluentParser<Character, BigDecimal> subtraction = log(additionOrSubtractionRef.thenLeft(literal("-"))
                 .then(multiplicationOrDivisionRef)
-                .map(subtract)
-                .named("subtraction")
-                .log();
-        additionOrSubtraction = addition.orelse(subtraction)
-                .orelse(multiplicationOrDivisionRef)
-                .memo()
-                .named("additionOrSubtraction")
-                .log();
+                .map(subtract).named("subtraction"));
+        additionOrSubtraction = log(
+                memo(addition.orelse(subtraction).orelse(multiplicationOrDivisionRef)).named("additionOrSubtraction"));
         expr = additionOrSubtraction.asFailure();
     }
 

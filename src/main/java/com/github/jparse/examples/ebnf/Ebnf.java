@@ -39,7 +39,9 @@ import static com.github.jparse.CharParsers.literal;
 import static com.github.jparse.CharParsers.pattern;
 import static com.github.jparse.Parsers.phrase;
 import static com.github.jparse.Sequences.fromCharSequence;
-import static com.github.jparse.Sequences.withMemo;
+import static com.github.jparse.StatefulParsers.log;
+import static com.github.jparse.StatefulParsers.memo;
+import static com.github.jparse.StatefulSequences.withMemo;
 
 public final class Ebnf {
 
@@ -129,75 +131,41 @@ public final class Ebnf {
                 return altExpr.parse(sequence);
             }
         };
-        FluentParser<Character, ?> comments = pattern("/\\*.*?\\*/").rep().named("comments").log();
-        FluentParser<Character, Identifier> ident = comments.thenRight(pattern("^[A-Za-z][0-9A-Za-z_]*"))
-                .map(newIdent)
-                .named("ident")
-                .log();
-        FluentParser<Character, Expression> termExpr = comments.thenRight(literal("'").thenRight(pattern("[^']*"))
+        FluentParser<Character, ?> comments = log(pattern("/\\*.*?\\*/").rep().named("comments"));
+        FluentParser<Character, Identifier> ident = log(
+                comments.thenRight(pattern("^[A-Za-z][0-9A-Za-z_]*")).map(newIdent).named("ident"));
+        FluentParser<Character, Expression> termExpr = log(comments.thenRight(literal("'").thenRight(pattern("[^']*"))
                 .thenLeft(literal("'").asError())
                 .orelse(literal("\"").thenRight(pattern("[^\"]*")).thenLeft(literal("\"").asError())))
-                .map(newTermExpr)
-                .named("termExpr")
-                .log();
-        FluentParser<Character, Expression> identExpr = ident.map(newIdentExpr).named("identExpr").log();
-        FluentParser<Character, Expression> groupExpr = comments.thenRight(literal("("))
+                .map(newTermExpr).named("termExpr"));
+        FluentParser<Character, Expression> identExpr = log(ident.map(newIdentExpr).named("identExpr"));
+        FluentParser<Character, Expression> groupExpr = log(comments.thenRight(literal("("))
                 .thenRight(altExprRef)
                 .thenLeft(comments)
-                .thenLeft(literal(")").asError())
-                .named("groupExpr")
-                .log();
-        FluentParser<Character, Expression> optExpr = quantExprRef.thenLeft(comments)
-                .thenLeft(literal("?"))
-                .map(newOptExpr)
-                .named("optExpr")
-                .log();
-        FluentParser<Character, Expression> repExpr = quantExprRef.thenLeft(comments)
-                .thenLeft(literal("*"))
-                .map(newRepExpr)
-                .named("repExpr")
-                .log();
-        FluentParser<Character, Expression> rep1Expr = quantExprRef.thenLeft(comments)
-                .thenLeft(literal("+"))
-                .map(newRep1Expr)
-                .named("rep1Expr")
-                .log();
-        quantExpr = optExpr.orelse(repExpr)
-                .orelse(rep1Expr)
-                .orelse(termExpr.orelse(identExpr).orelse(groupExpr))
-                .memo()
-                .named("quantExpr")
-                .log();
-        concatExpr = concatExprRef.thenLeft(comments)
-                .then(quantExpr)
-                .map(newConcatExpr)
-                .orelse(quantExpr)
-                .memo()
-                .named("concatExpr")
-                .log();
-        altExpr = altExprRef.thenLeft(comments)
+                .thenLeft(literal(")").asError()).named("groupExpr"));
+        FluentParser<Character, Expression> optExpr = log(
+                quantExprRef.thenLeft(comments).thenLeft(literal("?")).map(newOptExpr).named("optExpr"));
+        FluentParser<Character, Expression> repExpr = log(
+                quantExprRef.thenLeft(comments).thenLeft(literal("*")).map(newRepExpr).named("repExpr"));
+        FluentParser<Character, Expression> rep1Expr = log(
+                quantExprRef.thenLeft(comments).thenLeft(literal("+")).map(newRep1Expr).named("rep1Expr"));
+        quantExpr = log(memo(optExpr.orelse(repExpr)
+                .orelse(rep1Expr).orelse(termExpr.orelse(identExpr).orelse(groupExpr))).named("quantExpr"));
+        concatExpr = log(
+                memo(concatExprRef.thenLeft(comments).then(quantExpr).map(newConcatExpr).orelse(quantExpr)).named(
+                        "concatExpr"));
+        altExpr = log(memo(altExprRef.thenLeft(comments)
                 .thenLeft(literal("|"))
                 .then(concatExpr)
-                .map(newAltExpr)
-                .orelse(concatExpr)
-                .memo()
-                .named("altExpr")
-                .log();
-        FluentParser<Character, Rule> rule = ident.thenLeft(comments)
+                .map(newAltExpr).orelse(concatExpr)).named("altExpr"));
+        FluentParser<Character, Rule> rule = log(ident.thenLeft(comments)
                 .thenLeft(literal(":").asError())
                 .then(altExpr)
                 .thenLeft(comments)
                 .thenLeft(literal(";").asError())
-                .map(newRule)
-                .named("rule")
-                .log();
-        grammar = rule.rep1()
-                .thenLeft(comments)
-                .thenLeft(pattern("\\s*"))
-                .map(newGrammar)
-                .asFailure()
-                .named("grammar")
-                .log();
+                .map(newRule).named("rule"));
+        grammar = log(
+                rule.rep1().thenLeft(comments).thenLeft(pattern("\\s*")).map(newGrammar).asFailure().named("grammar"));
     }
 
     public static void main(String[] args) throws IOException {
