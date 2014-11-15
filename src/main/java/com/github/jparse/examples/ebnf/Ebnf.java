@@ -41,7 +41,7 @@ import static com.github.jparse.Parsers.phrase;
 import static com.github.jparse.Sequences.fromCharSequence;
 import static com.github.jparse.StatefulParsers.log;
 import static com.github.jparse.StatefulParsers.memo;
-import static com.github.jparse.StatefulSequences.withMemo;
+import static com.github.jparse.StatefulSequences.stateful;
 
 public final class Ebnf {
 
@@ -170,7 +170,7 @@ public final class Ebnf {
 
     public static void main(String[] args) throws IOException {
         String sequence = readFully(new InputStreamReader(Ebnf.class.getResourceAsStream("grammar")));
-        ParseResult<Character, ? extends Grammar> result = phrase(grammar).parse(withMemo(fromCharSequence(sequence)));
+        ParseResult<Character, ? extends Grammar> result = phrase(grammar).parse(stateful(fromCharSequence(sequence)));
         if (result.isSuccess()) {
             Grammar grammar = result.getResult();
             System.out.println(grammar);

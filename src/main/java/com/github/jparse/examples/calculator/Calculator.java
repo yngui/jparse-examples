@@ -37,7 +37,7 @@ import static com.github.jparse.CharParsers.pattern;
 import static com.github.jparse.Sequences.fromCharSequence;
 import static com.github.jparse.StatefulParsers.log;
 import static com.github.jparse.StatefulParsers.memo;
-import static com.github.jparse.StatefulSequences.withMemo;
+import static com.github.jparse.StatefulSequences.stateful;
 
 public final class Calculator {
 
@@ -119,7 +119,7 @@ public final class Calculator {
 
     public static void main(String[] args) {
         String sequence = "1+(2-3)*4";
-        ParseResult<Character, ? extends BigDecimal> result = expr.phrase().parse(withMemo(fromCharSequence(sequence)));
+        ParseResult<Character, ? extends BigDecimal> result = expr.phrase().parse(stateful(fromCharSequence(sequence)));
         if (result.isSuccess()) {
             System.out.println(result.getResult());
         } else {
